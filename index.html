@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>數據動畫製作器</title>
+    <title>Data Visualizer</title>
     <!-- 載入 Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- 載入 html2canvas (截圖用) -->
@@ -68,7 +68,7 @@
     <!-- 載入中遮罩 -->
     <div id="loadingOverlay" class="fixed inset-0 bg-black/50 z-50 hidden flex flex-col items-center justify-center text-white">
         <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-white mb-4"></div>
-        <h3 class="text-xl font-bold" id="loadingText">正在生成 GIF...</h3>
+        <h3 class="text-xl font-bold" id="loadingText">正在製作 GIF...</h3>
         <p class="text-sm opacity-80 mt-2">這可能需要幾秒鐘，請稍候</p>
         <div class="w-64 h-2 bg-gray-700 rounded-full mt-4 overflow-hidden">
             <div id="progressBar" class="h-full bg-green-500 w-0 transition-all duration-300"></div>
@@ -76,9 +76,9 @@
     </div>
 
     <div id="app" class="max-w-6xl mx-auto bg-white shadow-xl rounded-2xl overflow-hidden">
-        <header class="p-6 md:p-8 bg-blue-600 text-white">
-            <h1 class="text-3xl font-bold tracking-tight">數據動畫製作器 💡</h1>
-            <p class="mt-1 opacity-90">輸入您的數據，即時生成動態圖表預覽並下載 GIF。</p>
+        <header class="p-6 md:p-8 bg-green-300 text-white">
+            <h1 class="text-3xl text-gray-800 font-bold tracking-tight">動態資料視覺化工具 Data Visualizer 💡</h1>
+            <p class="mt-1 opacity-90 text-gray-800 ">輸入您的數據，即時生成動態圖表預覽並下載 GIF 動態圖檔或 PNG 靜態圖檔。</p>
         </header>
 
         <div class="grid grid-cols-1 lg:col-span-3 gap-8 p-6 md:p-8">
@@ -125,15 +125,15 @@
                         </label>
                         <label class="flex items-center space-x-2 cursor-pointer p-2 rounded-lg hover:bg-white transition duration-150 border bg-white shadow-sm">
                             <input type="radio" name="chartStyle" value="pie" onclick="setChartStyle('pie')" class="form-radio text-blue-600 h-4 w-4">
-                            <span class="text-sm font-medium text-gray-700">比例堆疊方塊</span>
+                            <span class="text-sm font-medium text-gray-700">比例堆疊方塊 (Rectangles)</span>
                         </label>
                          <label class="flex items-center space-x-2 cursor-pointer p-2 rounded-lg hover:bg-white transition duration-150 border bg-white shadow-sm">
                             <input type="radio" name="chartStyle" value="prop_squares" onclick="setChartStyle('prop_squares')" class="form-radio text-blue-600 h-4 w-4">
-                            <span class="text-sm font-medium text-gray-700">比例面積方塊</span>
+                            <span class="text-sm font-medium text-gray-700">比例面積方塊 (Squares)</span>
                         </label>
                          <label class="flex items-center space-x-2 cursor-pointer p-2 rounded-lg hover:bg-white transition duration-150 border bg-white shadow-sm">
                             <input type="radio" name="chartStyle" value="circles" onclick="setChartStyle('circles')" class="form-radio text-blue-600 h-4 w-4">
-                            <span class="text-sm font-medium text-gray-700">比例面積圓圈</span>
+                            <span class="text-sm font-medium text-gray-700">比例面積圓圈 (Circles)</span>
                         </label>
                          <label class="flex items-center space-x-2 cursor-pointer p-2 rounded-lg hover:bg-white transition duration-150 border bg-white shadow-sm">
                             <input type="radio" name="chartStyle" value="rectangles" onclick="setChartStyle('rectangles')" class="form-radio text-blue-600 h-4 w-4">
@@ -165,15 +165,23 @@
                 <div class="pt-4 border-t mt-6 flex justify-end space-x-3">
                     <button onclick="downloadPNG()"
                             class="px-4 py-3 bg-gray-600 text-white font-bold text-sm rounded-xl shadow hover:bg-gray-700 transition duration-150">
-                        下載靜態 PNG (無邊框)
+                        下載 PNG 靜態圖檔
                     </button>
                     <button onclick="generateGIF()"
-                            class="px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white font-bold text-lg rounded-xl shadow-lg hover:from-blue-600 hover:to-purple-700 transition duration-150 transform hover:scale-[1.02]">
-                        ✨ 下載動畫 GIF (無邊框)
+                            class="px-6 py-3 bg-gradient-to-r from-green-500 to-blue-600 text-white font-bold text-lg rounded-xl shadow-lg hover:from-green-700 hover:to-blue-900 transition duration-150 transform hover:scale-[1.02]">
+                        ✨ 下載 GIF 動畫圖檔  ✨
                     </button>
                 </div>
             </div>
         </div>
+        
+        <!-- Footer -->
+        <div class="text-center py-6 border-t border-gray-100 bg-gray-50">
+            <p class="text-gray-500 text-sm">
+                Created by <a href="https://www.aaronshi.cc" target="_blank" rel="noopener noreferrer" class="font-medium text-blue-600 hover:text-blue-500 transition-colors">AaronShi.cc</a>
+            </p>
+        </div>
+        
     </div>
 
     <script>
@@ -731,3 +739,4 @@
 </body>
 
 </html>
+
