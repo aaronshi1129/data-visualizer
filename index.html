@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Data Visualizer</title>
+    <title>動態資料視覺化工具 Data Visualizer</title>
     <!-- 載入 Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- 載入 html2canvas (截圖用) -->
@@ -52,8 +52,15 @@
         #loadingOverlay {
             backdrop-filter: blur(5px);
         }
+        
+        /* 標籤文字樣式 */
+        .chart-label {
+            text-shadow: 0px 0px 2px rgba(255,255,255,0.8);
+            pointer-events: none;
+        }
     </style>
 </head>
+
 <!-- Google tag (gtag.js) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-Z6V4ZXXZXS"></script>
 <script>
@@ -63,13 +70,14 @@
 
   gtag('config', 'G-Z6V4ZXXZXS');
 </script>
+
 <body class="min-h-screen p-4 md:p-8 relative">
     
     <!-- 載入中遮罩 -->
     <div id="loadingOverlay" class="fixed inset-0 bg-black/50 z-50 hidden flex flex-col items-center justify-center text-white">
         <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-white mb-4"></div>
         <h3 class="text-xl font-bold" id="loadingText">正在製作 GIF...</h3>
-        <p class="text-sm opacity-80 mt-2">這可能需要幾秒鐘，請稍候</p>
+        <p class="text-sm opacity-80 mt-2">小幫手正在努力製作中，還需要幾秒鐘，請等一下~~</p>
         <div class="w-64 h-2 bg-gray-700 rounded-full mt-4 overflow-hidden">
             <div id="progressBar" class="h-full bg-green-500 w-0 transition-all duration-300"></div>
         </div>
@@ -92,6 +100,14 @@
                     <input type="text" id="gifTitle" maxlength="96" value="您的數據比較"
                            class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150"
                            oninput="updatePreview()">
+                </div>
+                
+                <!-- 單位設定 (新增) -->
+                <div>
+                    <label for="dataUnit" class="block text-sm font-medium text-gray-700 mb-1">單位 (選填)</label>
+                    <input type="text" id="dataUnit" maxlength="20" placeholder="例如: kg, 人, 元"
+                           class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-150"
+                           oninput="updateUnit(this.value)">
                 </div>
 
                 <!-- 變數輸入區 -->
@@ -125,11 +141,11 @@
                         </label>
                         <label class="flex items-center space-x-2 cursor-pointer p-2 rounded-lg hover:bg-white transition duration-150 border bg-white shadow-sm">
                             <input type="radio" name="chartStyle" value="pie" onclick="setChartStyle('pie')" class="form-radio text-blue-600 h-4 w-4">
-                            <span class="text-sm font-medium text-gray-700">比例堆疊方塊 (Rectangles)</span>
+                            <span class="text-sm font-medium text-gray-700">比例堆疊方塊(Rectangles)</span>
                         </label>
                          <label class="flex items-center space-x-2 cursor-pointer p-2 rounded-lg hover:bg-white transition duration-150 border bg-white shadow-sm">
                             <input type="radio" name="chartStyle" value="prop_squares" onclick="setChartStyle('prop_squares')" class="form-radio text-blue-600 h-4 w-4">
-                            <span class="text-sm font-medium text-gray-700">比例面積方塊 (Squares)</span>
+                            <span class="text-sm font-medium text-gray-700">比例面積方塊  (Squares)</span>
                         </label>
                          <label class="flex items-center space-x-2 cursor-pointer p-2 rounded-lg hover:bg-white transition duration-150 border bg-white shadow-sm">
                             <input type="radio" name="chartStyle" value="circles" onclick="setChartStyle('circles')" class="form-radio text-blue-600 h-4 w-4">
@@ -137,7 +153,7 @@
                         </label>
                          <label class="flex items-center space-x-2 cursor-pointer p-2 rounded-lg hover:bg-white transition duration-150 border bg-white shadow-sm">
                             <input type="radio" name="chartStyle" value="rectangles" onclick="setChartStyle('rectangles')" class="form-radio text-blue-600 h-4 w-4">
-                            <span class="text-sm font-medium text-gray-700">長方形 (Rectangles)</span>
+                            <span class="text-sm font-medium text-gray-700">柱狀圖 (Vertical Bars)</span>
                         </label>
                         <label class="flex items-center space-x-2 cursor-pointer p-2 rounded-lg hover:bg-white transition duration-150 border bg-white shadow-sm">
                             <input type="radio" name="chartStyle" value="line" onclick="setChartStyle('line')" class="form-radio text-blue-600 h-4 w-4">
@@ -147,6 +163,38 @@
                             <input type="radio" name="chartStyle" value="radar" onclick="setChartStyle('radar')" class="form-radio text-blue-600 h-4 w-4">
                             <span class="text-sm font-medium text-gray-700">雷達圖 (Radar)</span>
                         </label>
+                    </div>
+                </div>
+
+                <!-- 顯示設定控制 (新增) -->
+                <div class="bg-white p-4 rounded-lg border border-gray-200 shadow-sm space-y-3">
+                    <h3 class="text-sm font-bold text-gray-700">資料標籤與顯示設定</h3>
+                    <div class="flex flex-col md:flex-row md:items-center gap-4">
+                        <!-- 顯示標籤開關 -->
+                        <label class="flex items-center cursor-pointer">
+                            <div class="relative">
+                                <input type="checkbox" id="toggleLabels" class="sr-only" checked onchange="toggleLabels(this.checked)">
+                                <div class="w-10 h-6 bg-gray-200 rounded-full shadow-inner toggle-bg transition duration-200 ease-in-out"></div>
+                                <div class="dot absolute w-4 h-4 bg-white rounded-full shadow left-1 top-1 transition transform duration-200 ease-in-out"></div>
+                            </div>
+                            <div class="ml-3 text-sm font-medium text-gray-700">
+                                顯示資料標籤
+                            </div>
+                        </label>
+                        
+                        <div class="h-6 w-px bg-gray-300 hidden md:block"></div>
+
+                        <!-- 數值模式切換 -->
+                        <div class="flex items-center space-x-4">
+                            <label class="flex items-center space-x-2 cursor-pointer">
+                                <input type="radio" name="valueMode" value="raw" checked onchange="setValueMode('raw')" class="text-blue-600 focus:ring-blue-500">
+                                <span class="text-sm text-gray-700">顯示原始數值</span>
+                            </label>
+                            <label class="flex items-center space-x-2 cursor-pointer">
+                                <input type="radio" name="valueMode" value="percent" onchange="setValueMode('percent')" class="text-blue-600 focus:ring-blue-500">
+                                <span class="text-sm text-gray-700">轉換成百分比</span>
+                            </label>
+                        </div>
                     </div>
                 </div>
 
@@ -174,15 +222,24 @@
                 </div>
             </div>
         </div>
-        
+
         <!-- Footer -->
         <div class="text-center py-6 border-t border-gray-100 bg-gray-50">
             <p class="text-gray-500 text-sm">
                 Created by <a href="https://www.aaronshi.cc" target="_blank" rel="noopener noreferrer" class="font-medium text-blue-600 hover:text-blue-500 transition-colors">AaronShi.cc</a>
             </p>
         </div>
-        
     </div>
+
+    <!-- Toggle Switch CSS -->
+    <style>
+        input:checked ~ .toggle-bg {
+            background-color: #3b82f6;
+        }
+        input:checked ~ .dot {
+            transform: translateX(100%);
+        }
+    </style>
 
     <script>
         // --- 設定與變數 ---
@@ -205,11 +262,33 @@
             RADAR: 'radar'
         };
         let chartStyle = CHART_STYLES.BARS;
+        
+        // 顯示設定
+        let displayConfig = {
+            showLabels: true,
+            valueMode: 'raw', // 'raw' or 'percent'
+            unit: ''
+        };
 
         // --- 核心邏輯 ---
 
         function setChartStyle(style) {
             chartStyle = style;
+            updatePreview();
+        }
+
+        function toggleLabels(checked) {
+            displayConfig.showLabels = checked;
+            updatePreview();
+        }
+
+        function setValueMode(mode) {
+            displayConfig.valueMode = mode;
+            updatePreview();
+        }
+        
+        function updateUnit(val) {
+            displayConfig.unit = val;
             updatePreview();
         }
 
@@ -280,18 +359,31 @@
         }
         function removeVariable(index) { if (variables.length > 2) { variables.splice(index, 1); renderVariables(); updatePreview(); } }
 
+        // --- 數值格式化輔助函式 ---
+        function formatValue(value, total) {
+            if (displayConfig.valueMode === 'percent') {
+                const pct = total > 0 ? (value / total) * 100 : 0;
+                return `${pct.toFixed(1)}%`;
+            } else {
+                return `${value}${displayConfig.unit ? ' ' + displayConfig.unit : ''}`;
+            }
+        }
+
         // --- 渲染與樣式應用 ---
 
         function getChartHTML(style, vars, total, maxVal) {
             // Helper: Bars
             if (style === CHART_STYLES.BARS) {
                 return vars.map((v, i) => {
-                    const pct = total > 0 ? (v.value / total) * 100 : 0;
+                    const displayVal = formatValue(v.value, total);
+                    // 根據設定決定是否顯示詳細數值
+                    const textContent = displayConfig.showLabels ? `${displayVal}` : '';
+                    
                     return `
                     <div class="flex items-center space-x-4">
                         <div class="w-1/4 flex-shrink-0 text-right">
                             <span class="text-sm font-semibold text-gray-700">${v.name}</span>
-                            <span class="block text-xs text-gray-500">${v.value} (${pct.toFixed(1)}%)</span>
+                            <span class="block text-xs text-gray-500">${textContent}</span>
                         </div>
                         <div class="flex-grow h-10 bg-gray-200 rounded-full overflow-hidden relative shadow-inner">
                             <div id="el-${i}" class="bar-visual h-full rounded-full flex items-center justify-end pr-2 text-white font-bold"
@@ -304,19 +396,48 @@
             // Helper: Donut
             if (style === CHART_STYLES.DONUT) {
                 const R = 100, C = 2 * Math.PI * R;
+                let cumulativePercentage = 0;
+                
+                // Segments
                 const segments = vars.map((v, i) => `
                     <circle id="el-${i}" cx="120" cy="120" r="${R}" fill="none" stroke="${v.color}" stroke-width="35" 
                         stroke-dasharray="0 ${C}" stroke-dashoffset="0" class="donut-segment" stroke-linecap="round" />
                 `).join('');
+
+                // Labels on segments
+                let labelsOnChart = '';
+                if (displayConfig.showLabels) {
+                    labelsOnChart = vars.map((v, i) => {
+                         const value = v.value > 0 ? v.value : 0;
+                         const percentage = total > 0 ? (value / total) : 0;
+                         const startAngle = cumulativePercentage * 2 * Math.PI; // radians
+                         cumulativePercentage += percentage;
+                         const endAngle = cumulativePercentage * 2 * Math.PI;
+                         const midAngle = startAngle + (endAngle - startAngle) / 2 - Math.PI/2; // -90deg offset
+                         
+                         // Position text at radius 100 (center of stroke width 35 is approx at 100 radius? No, stroke is centered on R=100)
+                         // Donut radius is 100. Stroke width is 35. So the ring goes from 82.5 to 117.5. Center is 100.
+                         const tx = 120 + 100 * Math.cos(midAngle);
+                         const ty = 120 + 100 * Math.sin(midAngle);
+                         
+                         // Only show label if segment is large enough
+                         if (percentage < 0.05) return '';
+
+                         return `<text x="${tx}" y="${ty}" text-anchor="middle" dominant-baseline="middle" font-size="10" fill="white" font-weight="bold" class="chart-label">${formatValue(value, total)}</text>`;
+                    }).join('');
+                }
+
                 const legend = vars.map(v => `<div class="flex items-center space-x-2"><div class="w-3 h-3 rounded-full" style="background-color: ${v.color};"></div><span class="text-sm text-gray-700">${v.name}</span></div>`).join('');
-                return `<div class="flex flex-col md:flex-row items-center justify-center space-y-6 md:space-y-0 md:space-x-12"><div class="flex-shrink-0"><svg width="240" height="240" viewBox="0 0 240 240"><circle cx="120" cy="120" r="${R}" fill="none" stroke="#e5e7eb" stroke-width="35"/>${segments}<text x="120" y="135" text-anchor="middle" class="text-xl font-bold text-gray-600">Total: ${total}</text></svg></div><div class="space-y-3 p-4 border rounded-lg">${legend}</div></div>`;
+                return `<div class="flex flex-col md:flex-row items-center justify-center space-y-6 md:space-y-0 md:space-x-12"><div class="flex-shrink-0"><svg width="240" height="240" viewBox="0 0 240 240"><circle cx="120" cy="120" r="${R}" fill="none" stroke="#e5e7eb" stroke-width="35"/>${segments}${labelsOnChart}<text x="120" y="130" text-anchor="middle" class="text-xl font-bold text-gray-600">總計</text><text x="120" y="150" text-anchor="middle" class="text-sm text-gray-500">${total}</text></svg></div><div class="space-y-3 p-4 border rounded-lg">${legend}</div></div>`;
             }
 
             // Helper: Stacked Squares
             if (style === CHART_STYLES.PIE) {
                 const SIZE = 200;
                 let segments = vars.map((v, i) => `
-                    <div id="el-${i}" class="chart-element-animate absolute w-full rounded-none" style="background-color: ${v.color}; height: 0%; bottom: 0; width: 100%;"></div>
+                    <div id="el-${i}" class="chart-element-animate absolute w-full rounded-none flex items-center justify-center overflow-hidden" style="background-color: ${v.color}; height: 0%; bottom: 0; width: 100%;">
+                        ${displayConfig.showLabels ? `<span class="text-white font-bold text-xs chart-label">${formatValue(v.value, total)}</span>` : ''}
+                    </div>
                 `).join(''); 
                 const legend = vars.map(v => `<div class="flex items-center space-x-2"><div class="w-3 h-3 rounded-full" style="background-color: ${v.color};"></div><span class="text-sm text-gray-700">${v.name}</span></div>`).join('');
                 return `<div class="flex flex-col md:flex-row items-center justify-center space-y-6 md:space-y-0 md:space-x-12"><div class="w-[${SIZE}px] h-[${SIZE}px] bg-gray-200 shadow-xl border-4 border-gray-100 rounded-lg relative overflow-hidden flex-shrink-0">${segments}</div><div class="space-y-3 p-4 border rounded-lg">${legend}</div></div>`;
@@ -326,10 +447,10 @@
             if (style === CHART_STYLES.RECTANGLES) {
                 const MAX_H = 200;
                 const rects = vars.map((v, i) => {
-                    const pct = total > 0 ? (v.value / total) * 100 : 0;
+                    const displayVal = formatValue(v.value, total);
                     return `
                     <div class="flex flex-col items-center w-1/5 min-w-[80px] space-y-2">
-                        <span class="text-sm font-bold text-gray-800">${pct.toFixed(1)}%</span>
+                        <span class="text-sm font-bold text-gray-800" style="opacity: ${displayConfig.showLabels ? 1 : 0}">${displayVal}</span>
                         <div class="h-[${MAX_H}px] w-full bg-gray-200 rounded-t-lg flex items-end overflow-hidden shadow-inner">
                             <div id="el-${i}" class="rectangle-bar chart-element-animate w-full rounded-t-lg" style="background-color: ${v.color}; height: 0%;"></div>
                         </div>
@@ -354,7 +475,7 @@
                             </svg>
                         </div>
                         <span class="text-sm font-semibold text-gray-700 truncate w-full text-center">${v.name}</span>
-                        <span class="text-xs text-gray-500">${v.value}</span>
+                        <span class="text-xs text-gray-500" style="opacity: ${displayConfig.showLabels ? 1 : 0}">${formatValue(v.value, total)}</span>
                     </div>`; 
                 }).join('');
                 return `<div class="flex flex-wrap justify-center items-end gap-4 p-4">${items}</div>`;
@@ -371,7 +492,12 @@
                 const d = points.map((p, i) => `${i===0?'M':'L'} ${p.x} ${p.y}`).join(' ');
 
                 const markers = points.map((p, i) => `<circle id="el-marker-${i}" cx="${p.x}" cy="${p.y}" r="8" fill="${vars[i].color}" stroke="white" stroke-width="2" class="line-marker chart-element-animate" style="transform: scale(0);"/>`).join('');
-                const labels = points.map((p, i) => `<text x="${p.x}" y="${H-P+15}" text-anchor="middle" font-size="12" fill="#666">${vars[i].name}</text>`).join('');
+                // Labels updated to show Name + Value
+                const labels = points.map((p, i) => {
+                    const displayVal = formatValue(vars[i].value, total);
+                    const labelText = displayConfig.showLabels ? `${vars[i].name} (${displayVal})` : vars[i].name;
+                    return `<text x="${p.x}" y="${H-P+15}" text-anchor="middle" font-size="12" fill="#666">${labelText}</text>`;
+                }).join('');
 
                 return `
                 <div class="flex justify-center p-4">
@@ -393,20 +519,17 @@
 
                 if (count < 2) return `<div class="text-center p-10">雷達圖需要至少 2 個數據點</div>`;
 
-                // Generate Grid (Polygon for 3+, Line for 2)
+                // Generate Grid
                 let gridLines = '';
                 const levels = [0.25, 0.5, 0.75, 1];
                 
                 if (count === 2) {
-                     // 2 points case: just lines
                      gridLines += levels.map(l => {
                          const r = RADIUS * l;
                          return `<line x1="${CX-r}" y1="${CY}" x2="${CX+r}" y2="${CY}" stroke="#e5e7eb" stroke-width="1"/>`;
                      }).join('');
-                     // Axis
                      gridLines += `<line x1="${CX-RADIUS}" y1="${CY}" x2="${CX+RADIUS}" y2="${CY}" stroke="#d1d5db" stroke-width="1"/>`;
                 } else {
-                    // Polygon grid
                     levels.forEach(level => {
                         const r = RADIUS * level;
                         let points = [];
@@ -416,47 +539,42 @@
                         }
                         gridLines += `<polygon points="${points.join(' ')}" fill="none" stroke="#e5e7eb" stroke-width="1"/>`;
                     });
-                    // Axes
                     for(let i=0; i<count; i++) {
                          const angle = (Math.PI * 2 * i) / count - Math.PI / 2;
                          gridLines += `<line x1="${CX}" y1="${CY}" x2="${CX + RADIUS * Math.cos(angle)}" y2="${CY + RADIUS * Math.sin(angle)}" stroke="#d1d5db" stroke-width="1"/>`;
                     }
                 }
 
-                // Initial Data Polygon (All points at center)
                 let initialPoints = [];
                 for(let i=0; i<count; i++) initialPoints.push(`${CX},${CY}`);
 
-                // Data Points (Markers) & Labels
                 let markers = '';
                 let labels = '';
-                const effMax = maxVal > 0 ? maxVal : 1;
-
+                
                 for(let i=0; i<count; i++) {
                     const angle = (Math.PI * 2 * i) / count - Math.PI / 2;
-                    // Labels position (slightly outside radius)
                     const lx = CX + (RADIUS + 25) * Math.cos(angle);
                     const ly = CY + (RADIUS + 25) * Math.sin(angle);
-                    labels += `<text x="${lx}" y="${ly}" text-anchor="middle" dominant-baseline="middle" font-size="12" fill="#4b5563">${vars[i].name}</text>`;
                     
-                    // Marker (Start at center)
+                    const displayVal = formatValue(vars[i].value, total);
+                    const labelText = displayConfig.showLabels ? `${vars[i].name}\n${displayVal}` : vars[i].name;
+                    
+                    // Allow multiline text in SVG via tspans
+                    const lines = labelText.split('\n');
+                    const tspans = lines.map((line, idx) => `<tspan x="${lx}" dy="${idx === 0 ? 0 : '1.2em'}">${line}</tspan>`).join('');
+
+                    labels += `<text x="${lx}" y="${ly}" text-anchor="middle" dominant-baseline="middle" font-size="11" fill="#4b5563">${tspans}</text>`;
+                    
                     markers += `<circle id="el-radar-pt-${i}" cx="${CX}" cy="${CY}" r="6" fill="${vars[i].color}" stroke="white" stroke-width="2" class="radar-point"/>`;
                 }
 
                 return `
                 <div class="flex justify-center p-4">
                     <svg width="${SIZE}" height="${SIZE}" viewBox="0 0 ${SIZE} ${SIZE}" class="bg-white rounded-lg shadow-sm">
-                        <!-- Background Grid -->
                         ${gridLines}
-                        
-                        <!-- Data Polygon Area -->
                         <polygon id="el-radar-poly" points="${initialPoints.join(' ')}" 
                                  fill="rgba(59, 130, 246, 0.2)" stroke="#3b82f6" stroke-width="2" class="radar-polygon"/>
-                        
-                        <!-- Markers -->
                         ${markers}
-                        
-                        <!-- Labels -->
                         ${labels}
                     </svg>
                 </div>`;
@@ -737,6 +855,4 @@
         };
     </script>
 </body>
-
 </html>
-
