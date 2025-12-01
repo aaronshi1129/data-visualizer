@@ -231,7 +231,7 @@
         </div>
     </div>
 
-    <!-- Toggle Switch CSS -->
+   <!-- Toggle Switch CSS -->
     <style>
         input:checked ~ .toggle-bg {
             background-color: #3b82f6;
@@ -381,9 +381,9 @@
                     
                     return `
                     <div class="flex items-center space-x-4">
-                        <div class="w-1/4 flex-shrink-0 text-right">
-                            <span class="text-sm font-semibold text-gray-700">${v.name}</span>
-                            <span class="block text-xs text-gray-500">${textContent}</span>
+                        <div class="w-1/4 flex-shrink-0 text-right pr-2 pb-1">
+                            <span class="text-sm font-semibold text-gray-700 break-words block leading-tight">${v.name}</span>
+                            <span class="block text-xs text-gray-500 mt-1">${textContent}</span>
                         </div>
                         <div class="flex-grow h-10 bg-gray-200 rounded-full overflow-hidden relative shadow-inner">
                             <div id="el-${i}" class="bar-visual h-full rounded-full flex items-center justify-end pr-2 text-white font-bold"
@@ -395,39 +395,36 @@
             
             // Helper: Donut
             if (style === CHART_STYLES.DONUT) {
-                const R = 100, C = 2 * Math.PI * R;
+                // Reduced Radius from 100 to 90 to give more padding
+                const R = 90, C = 2 * Math.PI * R;
                 let cumulativePercentage = 0;
                 
-                // Segments
                 const segments = vars.map((v, i) => `
                     <circle id="el-${i}" cx="120" cy="120" r="${R}" fill="none" stroke="${v.color}" stroke-width="35" 
                         stroke-dasharray="0 ${C}" stroke-dashoffset="0" class="donut-segment" stroke-linecap="round" />
                 `).join('');
 
-                // Labels on segments
                 let labelsOnChart = '';
                 if (displayConfig.showLabels) {
                     labelsOnChart = vars.map((v, i) => {
                          const value = v.value > 0 ? v.value : 0;
                          const percentage = total > 0 ? (value / total) : 0;
-                         const startAngle = cumulativePercentage * 2 * Math.PI; // radians
+                         const startAngle = cumulativePercentage * 2 * Math.PI; 
                          cumulativePercentage += percentage;
                          const endAngle = cumulativePercentage * 2 * Math.PI;
-                         const midAngle = startAngle + (endAngle - startAngle) / 2 - Math.PI/2; // -90deg offset
+                         const midAngle = startAngle + (endAngle - startAngle) / 2 - Math.PI/2; 
                          
-                         // Position text at radius 100 (center of stroke width 35 is approx at 100 radius? No, stroke is centered on R=100)
-                         // Donut radius is 100. Stroke width is 35. So the ring goes from 82.5 to 117.5. Center is 100.
-                         const tx = 120 + 100 * Math.cos(midAngle);
-                         const ty = 120 + 100 * Math.sin(midAngle);
+                         // Position text at new radius
+                         const tx = 120 + 90 * Math.cos(midAngle);
+                         const ty = 120 + 90 * Math.sin(midAngle);
                          
-                         // Only show label if segment is large enough
                          if (percentage < 0.05) return '';
 
                          return `<text x="${tx}" y="${ty}" text-anchor="middle" dominant-baseline="middle" font-size="10" fill="white" font-weight="bold" class="chart-label">${formatValue(value, total)}</text>`;
                     }).join('');
                 }
 
-                const legend = vars.map(v => `<div class="flex items-center space-x-2"><div class="w-3 h-3 rounded-full" style="background-color: ${v.color};"></div><span class="text-sm text-gray-700">${v.name}</span></div>`).join('');
+                const legend = vars.map(v => `<div class="flex items-center space-x-2 pb-1"><div class="w-3 h-3 rounded-full" style="background-color: ${v.color};"></div><span class="text-sm text-gray-700">${v.name}</span></div>`).join('');
                 return `<div class="flex flex-col md:flex-row items-center justify-center space-y-6 md:space-y-0 md:space-x-12"><div class="flex-shrink-0"><svg width="240" height="240" viewBox="0 0 240 240"><circle cx="120" cy="120" r="${R}" fill="none" stroke="#e5e7eb" stroke-width="35"/>${segments}${labelsOnChart}<text x="120" y="130" text-anchor="middle" class="text-xl font-bold text-gray-600">總計</text><text x="120" y="150" text-anchor="middle" class="text-sm text-gray-500">${total}</text></svg></div><div class="space-y-3 p-4 border rounded-lg">${legend}</div></div>`;
             }
 
@@ -439,7 +436,7 @@
                         ${displayConfig.showLabels ? `<span class="text-white font-bold text-xs chart-label">${formatValue(v.value, total)}</span>` : ''}
                     </div>
                 `).join(''); 
-                const legend = vars.map(v => `<div class="flex items-center space-x-2"><div class="w-3 h-3 rounded-full" style="background-color: ${v.color};"></div><span class="text-sm text-gray-700">${v.name}</span></div>`).join('');
+                const legend = vars.map(v => `<div class="flex items-center space-x-2 pb-1"><div class="w-3 h-3 rounded-full" style="background-color: ${v.color};"></div><span class="text-sm text-gray-700">${v.name}</span></div>`).join('');
                 return `<div class="flex flex-col md:flex-row items-center justify-center space-y-6 md:space-y-0 md:space-x-12"><div class="w-[${SIZE}px] h-[${SIZE}px] bg-gray-200 shadow-xl border-4 border-gray-100 rounded-lg relative overflow-hidden flex-shrink-0">${segments}</div><div class="space-y-3 p-4 border rounded-lg">${legend}</div></div>`;
             }
 
@@ -454,7 +451,7 @@
                         <div class="h-[${MAX_H}px] w-full bg-gray-200 rounded-t-lg flex items-end overflow-hidden shadow-inner">
                             <div id="el-${i}" class="rectangle-bar chart-element-animate w-full rounded-t-lg" style="background-color: ${v.color}; height: 0%;"></div>
                         </div>
-                        <span class="text-sm font-semibold text-gray-700 truncate w-full text-center">${v.name}</span>
+                        <span class="text-sm font-semibold text-gray-700 w-full text-center break-words leading-tight pb-1">${v.name}</span>
                     </div>`;
                 }).join('');
                 return `<div class="flex flex-wrap justify-center items-end gap-6 p-4">${rects}</div>`;
@@ -463,19 +460,25 @@
             // Helper: Circles / Squares (Proportional)
             if (style === CHART_STYLES.CIRCLES || style === CHART_STYLES.PROP_SQUARES) {
                 const BASE = 120;
+                // Increased Padding to Prevent clipping (Was 5)
+                const PADDING_SIZE = 10; 
+                const DRAW_MAX_SIZE = BASE - (PADDING_SIZE * 2); // 100
+                
                 const items = vars.map((v, i) => {
                    return `
                     <div class="flex flex-col items-center justify-end w-1/5 min-w-[120px] p-2 space-y-2">
                         <div class="relative w-full h-[${BASE}px] flex items-center justify-center">
                             <svg width="${BASE}" height="${BASE}" viewBox="0 0 ${BASE} ${BASE}" class="absolute">
                                 ${style === CHART_STYLES.CIRCLES 
-                                  ? `<circle id="el-${i}" cx="${BASE/2}" cy="${BASE/2}" r="${BASE/2}" fill="${v.color}" class="circle-visual chart-element-animate" style="transform: scale(0);"/>`
-                                  : `<rect id="el-${i}" x="0" y="0" width="${BASE}" height="${BASE}" fill="${v.color}" class="chart-element-animate" style="transform: scale(0); transform-origin: center;"/>`
+                                  // Circle: Center (60,60), Radius 50 (Total width 100)
+                                  ? `<circle id="el-${i}" cx="${BASE/2}" cy="${BASE/2}" r="${DRAW_MAX_SIZE/2}" fill="${v.color}" class="circle-visual chart-element-animate" style="transform: scale(0);"/>`
+                                  // Square: Start (10,10), Width 100
+                                  : `<rect id="el-${i}" x="${PADDING_SIZE}" y="${PADDING_SIZE}" width="${DRAW_MAX_SIZE}" height="${DRAW_MAX_SIZE}" fill="${v.color}" class="chart-element-animate" style="transform: scale(0); transform-origin: center;"/>`
                                 }
                             </svg>
                         </div>
-                        <span class="text-sm font-semibold text-gray-700 truncate w-full text-center">${v.name}</span>
-                        <span class="text-xs text-gray-500" style="opacity: ${displayConfig.showLabels ? 1 : 0}">${formatValue(v.value, total)}</span>
+                        <span class="text-sm font-semibold text-gray-700 w-full text-center break-words leading-tight">${v.name}</span>
+                        <span class="text-xs text-gray-500 pb-1" style="opacity: ${displayConfig.showLabels ? 1 : 0}">${formatValue(v.value, total)}</span>
                     </div>`; 
                 }).join('');
                 return `<div class="flex flex-wrap justify-center items-end gap-4 p-4">${items}</div>`;
@@ -492,7 +495,6 @@
                 const d = points.map((p, i) => `${i===0?'M':'L'} ${p.x} ${p.y}`).join(' ');
 
                 const markers = points.map((p, i) => `<circle id="el-marker-${i}" cx="${p.x}" cy="${p.y}" r="8" fill="${vars[i].color}" stroke="white" stroke-width="2" class="line-marker chart-element-animate" style="transform: scale(0);"/>`).join('');
-                // Labels updated to show Name + Value
                 const labels = points.map((p, i) => {
                     const displayVal = formatValue(vars[i].value, total);
                     const labelText = displayConfig.showLabels ? `${vars[i].name} (${displayVal})` : vars[i].name;
@@ -511,7 +513,8 @@
 
             // Helper: Radar Chart
             if (style === CHART_STYLES.RADAR) {
-                const SIZE = 300;
+                // Increased SIZE to accomodate labels
+                const SIZE = 340;
                 const CX = SIZE/2;
                 const CY = SIZE/2;
                 const RADIUS = 100;
@@ -519,7 +522,6 @@
 
                 if (count < 2) return `<div class="text-center p-10">雷達圖需要至少 2 個數據點</div>`;
 
-                // Generate Grid
                 let gridLines = '';
                 const levels = [0.25, 0.5, 0.75, 1];
                 
@@ -559,7 +561,6 @@
                     const displayVal = formatValue(vars[i].value, total);
                     const labelText = displayConfig.showLabels ? `${vars[i].name}\n${displayVal}` : vars[i].name;
                     
-                    // Allow multiline text in SVG via tspans
                     const lines = labelText.split('\n');
                     const tspans = lines.map((line, idx) => `<tspan x="${lx}" dy="${idx === 0 ? 0 : '1.2em'}">${line}</tspan>`).join('');
 
@@ -590,7 +591,6 @@
             
             const p = 1 - Math.pow(1 - progress, 3);
 
-            // Generic elements loop
             variables.forEach((v, i) => {
                 const el = document.getElementById(`el-${i}`);
                 if (!el) return;
@@ -600,7 +600,8 @@
                     el.style.width = `${targetPct * p}%`;
                 }
                 else if (chartStyle === CHART_STYLES.DONUT) {
-                    const R = 100, C = 2 * Math.PI * R;
+                    // Adjusted Radius logic for animation as well (90 is used in HTML gen)
+                    const R = 90, C = 2 * Math.PI * R;
                     let prevPct = 0;
                     for(let j=0; j<i; j++) prevPct += (variables[j].value/total);
                     
@@ -620,16 +621,20 @@
                 }
                 else if (chartStyle === CHART_STYLES.CIRCLES || chartStyle === CHART_STYLES.PROP_SQUARES) {
                     const BASE = 120;
+                    // Adjusted Max Size for scaling calculation
+                    const PADDING_SIZE = 10;
+                    const DRAW_MAX_SIZE = BASE - (PADDING_SIZE * 2);
+                    
                     const val = v.value > 0 ? v.value : 0;
                     let targetScale = 0;
                     
                     if (chartStyle === CHART_STYLES.CIRCLES) {
                         targetScale = maxSqrt > 0 ? Math.sqrt(val) / maxSqrt : 0;
                     } else {
-                        const BaseArea = BASE*BASE;
+                        const BaseArea = DRAW_MAX_SIZE * DRAW_MAX_SIZE;
                         const propArea = maxVal > 0 ? (val/maxVal) * BaseArea : 0;
                         const side = Math.sqrt(propArea);
-                        targetScale = maxVal > 0 ? side / BASE : 0;
+                        targetScale = maxVal > 0 ? side / DRAW_MAX_SIZE : 0;
                     }
                     el.style.transform = `scale(${targetScale * p})`;
                 }
@@ -663,9 +668,9 @@
                 });
             }
 
-            // Radar Chart Animation Logic
             if (chartStyle === CHART_STYLES.RADAR && variables.length >= 2) {
-                const SIZE = 300;
+                // Update CX/CY based on new SIZE
+                const SIZE = 340;
                 const CX = SIZE/2;
                 const CY = SIZE/2;
                 const RADIUS = 100;
@@ -676,14 +681,12 @@
                 for(let i=0; i<count; i++) {
                     const angle = (Math.PI * 2 * i) / count - Math.PI / 2;
                     const val = variables[i].value > 0 ? variables[i].value : 0;
-                    // Current radius for animation
                     const r = RADIUS * (val / effMax) * p;
                     
                     const x = CX + r * Math.cos(angle);
                     const y = CY + r * Math.sin(angle);
                     points.push(`${x},${y}`);
 
-                    // Move Markers
                     const marker = document.getElementById(`el-radar-pt-${i}`);
                     if(marker) {
                         marker.setAttribute('cx', x);
@@ -691,7 +694,6 @@
                     }
                 }
                 
-                // Update Polygon
                 const poly = document.getElementById('el-radar-poly');
                 if(poly) {
                     poly.setAttribute('points', points.join(' '));
@@ -727,10 +729,8 @@
             const classesToRemove = ['shadow-lg', 'rounded-xl', 'border', 'border-gray-100'];
             
             if (enable) {
-                // 準備截圖：移除裝飾
                 previewArea.classList.remove(...classesToRemove);
             } else {
-                // 截圖結束：恢復裝飾
                 previewArea.classList.add(...classesToRemove);
             }
         }
@@ -754,10 +754,8 @@
                 return;
             }
 
-            // 1. 準備截圖環境
-            toggleCaptureStyles(true); // 移除邊框
+            toggleCaptureStyles(true); 
             
-            // 初始化 GIF - 設定為白色背景，避免透明雜邊
             const gif = new GIF({
                 workers: 2,
                 quality: 10,
@@ -765,13 +763,12 @@
                 width: previewArea.offsetWidth,
                 height: previewArea.offsetHeight,
                 background: '#ffffff',
-                transparent: null // 不使用透明，因為 GIF 透明度支援有限
+                transparent: null 
             });
 
             overlay.classList.remove('hidden');
             loadingText.textContent = "準備錄製...";
             
-            // 選擇所有可能的動畫元素
             const allAnimated = document.querySelectorAll('.bar-visual, .donut-segment, .chart-element-animate, .rectangle-bar, .circle-visual, .line-marker, #el-line, .radar-polygon, .radar-point');
             allAnimated.forEach(el => {
                 el.style.transition = 'none'; 
@@ -793,7 +790,7 @@
 
                 try {
                     const canvas = await html2canvas(previewArea, {
-                        backgroundColor: '#ffffff', // 強制白底
+                        backgroundColor: '#ffffff', 
                         scale: 1, 
                         logging: false
                     });
@@ -808,8 +805,7 @@
             loadingText.textContent = "編碼 GIF 中 (請勿關閉視窗)...";
             
             gif.on('finished', function(blob) {
-                // 恢復環境
-                toggleCaptureStyles(false); // 恢復邊框
+                toggleCaptureStyles(false); 
                 allAnimated.forEach(el => el.style.transition = '');
                 
                 const url = URL.createObjectURL(blob);
@@ -830,15 +826,12 @@
         // --- PNG 下載邏輯 ---
         function downloadPNG() {
             const previewArea = document.getElementById('previewArea');
-            
-            // 1. 準備截圖環境
-            toggleCaptureStyles(true); // 移除邊框
+            toggleCaptureStyles(true); 
 
             html2canvas(previewArea, { 
-                backgroundColor: '#ffffff' // 強制白底，若要透明可改 null
+                backgroundColor: '#ffffff' 
             }).then(canvas => {
-                // 2. 恢復環境
-                toggleCaptureStyles(false); // 恢復邊框
+                toggleCaptureStyles(false); 
 
                 const a = document.createElement('a');
                 a.href = canvas.toDataURL('image/png');
@@ -856,5 +849,6 @@
     </script>
 </body>
 </html>
+
 
 
